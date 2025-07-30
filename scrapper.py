@@ -18,3 +18,6 @@ def login():
         print("Login failed:", e)
 
 
+
+reddit = login()
+print("Welcome User:",reddit.user.me())
