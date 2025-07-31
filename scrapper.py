@@ -16,8 +16,18 @@ def login():
             return reddit         
     except Exception as e:
         print("Login failed:", e)
+   
 
+def fetch_data():
+    response = requests.get("https://www.reddit.com/r/malaysia/hot.json?limit=10", headers=config.REDDIT_HEADER)
+
+    data = response.json()
+    for post in data['data']['children']:
+        print(post['data']['title'], post['data']['url'])
 
 
 reddit = login()
-print("Welcome User:",reddit.user.me())
+if reddit:
+    print("Welcome User:",reddit.user.me())
+    fetch_data()
+
