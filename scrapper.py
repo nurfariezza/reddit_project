@@ -1,6 +1,4 @@
 import json
-import os
-from urllib import response
 import praw, requests, config
 from datetime import datetime
 
@@ -19,29 +17,41 @@ def login():
             return reddit         
     except Exception as e:
         print("Login failed:", e)
-   
 
-def fetch_data():
+def fetch_data(pages, limit):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
     filename = f"reddit_content_{timestamp}.json"
+    after = None
+    base_url = "https://www.reddit.com/r/malaysia/hot.json"
+    result = []    
+    idx = 1 
 
-    response = requests.get("https://www.reddit.com/r/malaysia/hot.json?limit=50", headers=config.REDDIT_HEADER)
-    mainData = response.json()
-
-    result = []     
-    for idx, content in enumerate(mainData['data']['children'],start=1):
-        subContentData = {
-            "id":idx,
-            "content_title":content['data']['title'],
-            "content_image_url":content['data']['url'],
-            "content_created_date":content['data']['created'],
+    for _ in range(pages):
+        params = { "limit": limit,
+                "after": after
         }
-        result.append(subContentData)
+        response = requests.get(base_url, headers=config.REDDIT_HEADER, params = params)
+        mainData = response.json()
+        print(pages, limit)
+
+        children = mainData['data']['children']
+        after = mainData['data']['after']
+        for content in children:
+            subContentData = {
+                "id":idx,
+                "post_title":content['data']['title'],
+                "image_url":content['data']['url'],
+                "post_created_date":content['data']['created'],
+            }
+            result.append(subContentData)
+            idx += 1
+
     with open(filename, 'w') as file:
         json.dump(result,file, indent=4)
+        print(f"Saved {len(result)} posts to {filename}")
 
 reddit = login()
 if reddit:
     print("Welcome User:",reddit.user.me())
-    fetch_data()
+    fetch_data(pages = 10, limit = 10)
 
