@@ -1,5 +1,8 @@
+import json
+import os
 from urllib import response
 import praw, requests, config
+from datetime import datetime
 
 def login():
     try:
@@ -19,12 +22,23 @@ def login():
    
 
 def fetch_data():
-    response = requests.get("https://www.reddit.com/r/malaysia/hot.json?limit=10", headers=config.REDDIT_HEADER)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
+    filename = f"reddit_content_{timestamp}.json"
 
-    data = response.json()
-    for post in data['data']['children']:
-        print(post['data']['title'], post['data']['url'])
+    response = requests.get("https://www.reddit.com/r/malaysia/hot.json?limit=50", headers=config.REDDIT_HEADER)
+    mainData = response.json()
 
+    result = []     
+    for idx, content in enumerate(mainData['data']['children'],start=1):
+        subContentData = {
+            "id":idx,
+            "content_title":content['data']['title'],
+            "content_image_url":content['data']['url'],
+            "content_created_date":content['data']['created'],
+        }
+        result.append(subContentData)
+    with open(filename, 'w') as file:
+        json.dump(result,file, indent=4)
 
 reddit = login()
 if reddit:
